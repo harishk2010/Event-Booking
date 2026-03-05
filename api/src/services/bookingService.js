@@ -1,5 +1,6 @@
 const eventRepository = require("../repositories/eventRepository");
 const bookingRepository = require("../repositories/bookingRepository");
+const { sendBookingConfirmation } = require("./emailService");
 
 const bookingService = {
   createBooking({ eventId, name, email }) {
@@ -30,6 +31,10 @@ const bookingService = {
     // 4. Create booking & decrement seat
     const booking = bookingRepository.create({ eventId, name, email });
     const updatedEvent = eventRepository.decrementSeat(eventId);
+
+    sendBookingConfirmation({ name, email, event }).catch((err) =>
+      console.error("[Email] Failed to send confirmation:", err.message)
+    );
 
     return { booking, availableSeats: updatedEvent.availableSeats };
   },
