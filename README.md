@@ -230,19 +230,67 @@ curl http://localhost:4000/api/events
 
 ## Deployment
 
-### Backend (Render / Railway)
-1. Push `api/` to GitHub
-2. Create a new Web Service on Render
-3. Set **Build Command**: `npm install`
-4. Set **Start Command**: `node src/index.js`
-5. Set env var: `CLIENT_URL=https://your-frontend.vercel.app`
+### Backend — Railway
 
-### Frontend (Vercel / Netlify)
-1. Push `client/` to GitHub
-2. Import project on Vercel
-3. Set env var: `VITE_API_BASE_URL=https://your-api.onrender.com/api`
-4. Build command: `npm run build`
-5. Output directory: `dist`
+1. Push repo to GitHub
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
+3. In **Settings → Source**, set **Root Directory** to `api`
+4. Railway auto-detects Node.js and runs `npm install` + `npm start`
+5. Add environment variables in the **Variables** tab:
+
+| Key | Value |
+|-----|-------|
+| `NODE_ENV` | `production` |
+| `PORT` | `4000` |
+| `CLIENT_URL` | `https://your-frontend.vercel.app` |
+
+6. Railway provides a public URL: `https://your-app.up.railway.app`
+
+### Frontend — Vercel (via GitHub Actions CI/CD)
+
+Deployments are automated. Every push to `main` triggers the workflow at `.github/workflows/deploy.yml`.
+
+#### One-time Vercel setup
+
+1. Go to [vercel.com](https://vercel.com) and import your GitHub repo
+2. Set **Root Directory** to `client`
+3. Set **Build Command** to `npm run build` and **Output Directory** to `dist`
+4. Add environment variable: `VITE_API_BASE_URL=https://your-app.up.railway.app/api`
+
+#### One-time GitHub Secrets setup
+
+In your repo → **Settings → Secrets and variables → Actions**, add:
+
+| Secret | How to get it |
+|--------|---------------|
+| `VERCEL_TOKEN` | Vercel dashboard → Account Settings → Tokens |
+| `VERCEL_ORG_ID` | Run `vercel whoami` or found in `.vercel/project.json` after first `vercel link` |
+| `VERCEL_PROJECT_ID` | Found in `.vercel/project.json` after running `vercel link` in `client/` |
+
+#### The CI/CD workflow
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      - name: Deploy to Vercel
+        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+```
+
+Every push to `main` → GitHub Actions runs → Vercel deploys the latest frontend automatically.
 
 ---
 
