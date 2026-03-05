@@ -1,0 +1,12 @@
+{
+  "name": "event-booking-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix api && npm install --prefix client",
+    "dev:api": "npm run dev --prefix api",
+    "dev:client": "npm run dev --prefix client",
+    "start:api": "npm start --prefix api",
+    "build:client": "npm run build --prefix client"
+  }
+}
