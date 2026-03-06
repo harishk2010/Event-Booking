@@ -86,6 +86,8 @@ client/src/
 - [x] Reusable UI components (Button, Input, Badge, Modal)
 - [x] Centralized error handling middleware
 - [x] Security headers (Helmet), CORS, sanitization
+- [x] CI/CD pipeline via GitHub Actions → Vercel
+- [x] Booking confirmation email via Resend
 
 ---
 
@@ -300,7 +302,51 @@ Every push to `main` → GitHub Actions runs → Vercel deploys the latest front
 - **No auth**: Anyone with the same email can be blocked from re-booking, but there is no authentication.
 - **Duplicate check**: Based on `eventId + email` combination only.
 - **No pagination**: All events are returned in a single request (suitable for small datasets).
+---
 
+## Email Notifications
+
+After every successful booking, an automated confirmation email is sent to the attendee using [Resend](https://resend.com).
+
+### Email Template Preview
+
+<!-- Add your screenshot here -->
+![Booking Confirmation Email](./docs/email-preview.png)
+
+### What's included in the email
+
+- Event name, date & time, and location
+- Attendee name and email
+- Color-coded header matching the event's theme color
+- Clean, mobile-friendly HTML template
+
+### Setup
+
+1. Sign up at [resend.com](https://resend.com) and grab your API key
+2. Add it to `api/.env`:
+```env
+   RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+```
+3. For development, emails can only be sent to your Resend signup email unless you verify a domain
+4. For production, verify your domain in Resend → **Domains** → Add Domain, then update:
+```javascript
+   // api/src/services/emailService.js
+   const FROM_ADDRESS = "EventHub <noreply@yourdomain.com>";
+```
+
+### How it works
+
+- Email is fired **after** the booking is saved — non-blocking, so if Resend is down the booking still succeeds
+- In development, set `RESEND_TEST_EMAIL` in `api/.env` to redirect all emails to yourself:
+```env
+  RESEND_TEST_EMAIL=you@gmail.com
+```
+
+| Environment | Sends to |
+|-------------|----------|
+| Development (no domain) | Your Resend signup email only |
+| Development (with `RESEND_TEST_EMAIL`) | Your test email |
+| Production (verified domain) | Any recipient |
 ---
 
 ## What I'd Improve Next
